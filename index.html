@@ -1,3 +1,62 @@
+<script>
+    const gistId = 'ad494a1927fec8de412731d7e4e99b37'; // Replace with your actual Gist ID
+
+    async function saveData(data) {
+        const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': 'token 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', // Replace with your GitHub personal access token
+            },
+            body: JSON.stringify({
+                files: {
+                    'elo-data.json': {
+                        content: JSON.stringify(data, null, 2),
+                    },
+                },
+            }),
+        });
+
+        return response.json();
+    }
+
+    async function fetchData() {
+        const response = await fetch(`https://api.github.com/gists/${gistId}`);
+        const gist = await response.json();
+        
+        if (gist.files['elo-data.json']) {
+            return JSON.parse(gist.files['elo-data.json'].content);
+        } else {
+            return {};
+        }
+    }
+
+    // Your existing functions (addPlayer, getIndexOfPlayer, updateElo, etc.) remain unchanged.
+
+    // Modify recordMatch function to save data after updating Elo
+    async function recordMatch() {
+        const winningPlayer = document.getElementById("winningPlayer").value;
+        const losingPlayer = document.getElementById("losingPlayer").value;
+
+        const winnerIndex = getIndexOfPlayer(winningPlayer);
+        const loserIndex = getIndexOfPlayer(losingPlayer);
+
+        if (winnerIndex !== -1 && loserIndex !== -1) {
+            updateElo(winnerIndex, loserIndex);
+
+            // Save data after updating Elo
+            await saveData(players);
+        }
+
+        document.getElementById("winningPlayer").value = "";
+        document.getElementById("losingPlayer").value = "";
+    }
+
+    // Load data when the page loads
+    window.onload = async () => {
+        players = await fetchData();
+    };
+</script>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -98,27 +157,6 @@
                 output.innerHTML += `<p>${index + 1}. ${player.name} - Elo: ${player.elo.toFixed(2)}, Wins: ${player.wins}, Losses: ${player.losses}</p>`;
             });
         }
-    let players = [];
-
-    // Load player data from localStorage when the page loads
-    function loadPlayers() {
-        const savedPlayers = localStorage.getItem('players');
-        if (savedPlayers) {
-            players = JSON.parse(savedPlayers);
-        }
-    }
-
-    // Save player data to localStorage
-    function savePlayers() {
-        localStorage.setItem('players', JSON.stringify(players));
-    }
-
-    function addPlayer() {
-        // ... (your addPlayer code)
-        savePlayers(); // Call this after adding a player
-    }
-
-    function updateElo(winnerIndex, loserIndex)
     </script>
 </body>
 </html>
