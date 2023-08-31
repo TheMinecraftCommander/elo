@@ -17,10 +17,10 @@
   <script>
     const GIST_ID = "ad494a1927fec8de412731d7e4e99b37";
     const TOKEN = "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";
-    const API_URL = `https://api.github.com/gists/ad494a1927fec8de412731d7e4e99b37`;
-    
+    const API_URL = `https://api.github.com/gists/${GIST_ID}`;
+
     let players = {};
-    
+
     async function fetchData() {
       try {
         const response = await axios.get(API_URL, {
@@ -36,7 +36,7 @@
         console.error("Error fetching data:", error);
       }
     }
-    
+
     async function saveData() {
       try {
         await axios.patch(API_URL, {
@@ -54,10 +54,10 @@
         console.error("Error saving data:", error);
       }
     }
-    
+
     function addPlayer() {
       const playerName = prompt("Enter player name:");
-      if (playerName) {
+      if (playerName && !players[playerName]) {
         players[playerName] = {
           elo: 1000,
           rank: "Bronze 2"
@@ -65,7 +65,7 @@
         saveData();
       }
     }
-    
+
     function recordMatch() {
       const winner = prompt("Enter winner's name:");
       const loser = prompt("Enter loser's name:");
@@ -80,7 +80,7 @@
         saveData();
       }
     }
-    
+
     function updateRank(player) {
       const elo = player.elo;
       if (elo <= 950) player.rank = "Bronze 1";
@@ -97,7 +97,7 @@
       else if (elo <= 2000) player.rank = "Master";
       else player.rank = "Grandmaster";
     }
-    
+
     function showRanking() {
       const playerName = prompt("Enter player name:");
       const player = players[playerName];
@@ -107,14 +107,13 @@
         alert("Player not found.");
       }
     }
-    
+
     function showLeaderboard() {
       const sortedPlayers = Object.entries(players).sort((a, b) => b[1].elo - a[1].elo);
       const leaderboard = sortedPlayers.slice(0, 50).map(entry => `${entry[0]} - ${entry[1].rank} (Elo: ${entry[1].elo})`);
       document.getElementById("output").innerHTML = leaderboard.join("<br>");
     }
-    
+
     fetchData();
   </script>
 </body>
-</html>
