@@ -1,146 +1,120 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elo System</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-    </style>
+  <title>Elo System</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
-    <h1>Elo System</h1>
-    <div>
-        <label for="playerName">Enter player name:</label>
-        <input type="text" id="playerName">
-        <button onclick="addPlayer()">Add Player</button>
-    </div>
-    <div>
-        <label for="winningPlayer">Winning Player:</label>
-        <input type="text" id="winningPlayer">
-        <label for="losingPlayer">Losing Player:</label>
-        <input type="text" id="losingPlayer">
-        <button onclick="recordMatch()">Record Match Result</button>
-    </div>
-    <div>
-        <button onclick="displayRankings()">Display Rankings</button>
-        <button onclick="displayLeaderboard()">Display Leaderboard</button>
-    </div>
-    <div id="output"></div>
+  <h1>Elo System</h1>
 
-    <script>
-        const GIST_ID = 'ad494a1927fec8de412731d7e4e99b37';
-        const PERSONAL_ACCESS_TOKEN = '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';
+  <button onclick="addPlayer()">Add Player</button>
+  <button onclick="recordMatch()">Record Match</button>
+  <button onclick="showRanking()">Show Ranking</button>
+  <button onclick="showLeaderboard()">Display Leaderboard</button>
 
-        let players = [];
+  <div id="output"></div>
 
-        async function fetchData() {
-            const response = await fetch(`https://api.github.com/gists/${GIST_ID}`);
-            const gist = await response.json();
-            
-            if (gist.files['elo-data.json']) {
-                return JSON.parse(gist.files['elo-data.json'].content);
-            } else {
-                return [];
+  <script>
+    const GIST_ID = "ad494a1927fec8de412731d7e4e99b37";
+    const TOKEN = "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";
+    const API_URL = `https://api.github.com/gists/ad494a1927fec8de412731d7e4e99b37`;
+    
+    let players = {};
+    
+    async function fetchData() {
+      try {
+        const response = await axios.get(API_URL, {
+          headers: {
+            Authorization: `Bearer ${TOKEN}`
+          }
+        });
+        const data = response.data;
+        if (data.files && data.files["players.json"]) {
+          players = JSON.parse(data.files["players.json"].content);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+    
+    async function saveData() {
+      try {
+        await axios.patch(API_URL, {
+          files: {
+            "players.json": {
+              content: JSON.stringify(players, null, 2)
             }
-        }
-
-        async function saveData() {
-            const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `token ${PERSONAL_ACCESS_TOKEN}`,
-                },
-                body: JSON.stringify({
-                    files: {
-                        'elo-data.json': {
-                            content: JSON.stringify(players, null, 2),
-                        },
-                    },
-                }),
-            });
-
-            return response.json();
-        }
-
-        async function initialize() {
-            players = await fetchData();
-        }
-
-        async function addPlayer() {
-            const playerName = document.getElementById("playerName").value;
-            if (playerName) {
-                players.push({ name: playerName, elo: 1000, wins: 0, losses: 0 });
-                document.getElementById("playerName").value = "";
-                await saveData();
-            }
-        }
-
-        function getIndexOfPlayer(name) {
-            return players.findIndex(player => player.name === name);
-        }
-
-        function updateElo(winnerIndex, loserIndex) {
-            const kFactor = 32;
-            const winner = players[winnerIndex];
-            const loser = players[loserIndex];
-
-            const winnerExpectedScore = 1 / (1 + Math.pow(10, (loser.elo - winner.elo) / 400));
-            const loserExpectedScore = 1 - winnerExpectedScore;
-
-            winner.elo += kFactor * (1 - winnerExpectedScore);
-            loser.elo += kFactor * (0 - loserExpectedScore);
-
-            winner.wins++;
-            loser.losses++;
-        }
-
-        async function recordMatch() {
-            const winningPlayer = document.getElementById("winningPlayer").value;
-            const losingPlayer = document.getElementById("losingPlayer").value;
-
-            const winnerIndex = getIndexOfPlayer(winningPlayer);
-            const loserIndex = getIndexOfPlayer(losingPlayer);
-
-            if (winnerIndex !== -1 && loserIndex !== -1) {
-                updateElo(winnerIndex, loserIndex);
-                await saveData();
-            }
-
-            document.getElementById("winningPlayer").value = "";
-            document.getElementById("losingPlayer").value = "";
-        }
-
-        function displayRankings() {
-            players.sort((a, b) => b.elo - a.elo);
-
-            const output = document.getElementById("output");
-            output.innerHTML = "<h2>Rankings:</h2>";
-
-            players.forEach(player => {
-                const barLength = (player.elo / players[0].elo) * 30;
-                const bar = "#".repeat(Math.round(barLength));
-                output.innerHTML += `<p>${player.name}: ${bar} (${player.elo.toFixed(2)})</p>`;
-            });
-        }
-
-        function displayLeaderboard() {
-            players.sort((a, b) => b.elo - a.elo);
-
-            const output = document.getElementById("output");
-            output.innerHTML = "<h2>Leaderboard:</h2>";
-
-            players.forEach((player, index) => {
-                output.innerHTML += `<p>${index + 1}. ${player.name} - Elo: ${player.elo.toFixed(2)}, Wins: ${player.wins}, Losses: ${player.losses}</p>`;
-            });
-        }
-
-        // Load data when the page loads
-        window.onload = async () => {
-            await initialize();
+          }
+        }, {
+          headers: {
+            Authorization: `Bearer ${TOKEN}`
+          }
+        });
+      } catch (error) {
+        console.error("Error saving data:", error);
+      }
+    }
+    
+    function addPlayer() {
+      const playerName = prompt("Enter player name:");
+      if (playerName) {
+        players[playerName] = {
+          elo: 1000,
+          rank: "Bronze 2"
         };
-    </script>
+        saveData();
+      }
+    }
+    
+    function recordMatch() {
+      const winner = prompt("Enter winner's name:");
+      const loser = prompt("Enter loser's name:");
+      if (players[winner] && players[loser]) {
+        const K = 32; // Elo adjustment factor
+        const winnerExpected = 1 / (1 + 10 ** ((players[loser].elo - players[winner].elo) / 400));
+        const loserExpected = 1 - winnerExpected;
+        players[winner].elo += K * (1 - winnerExpected);
+        players[loser].elo += K * (0 - loserExpected);
+        updateRank(players[winner]);
+        updateRank(players[loser]);
+        saveData();
+      }
+    }
+    
+    function updateRank(player) {
+      const elo = player.elo;
+      if (elo <= 950) player.rank = "Bronze 1";
+      else if (elo <= 1000) player.rank = "Bronze 2";
+      else if (elo <= 1100) player.rank = "Bronze 3";
+      else if (elo <= 1200) player.rank = "Silver 1";
+      else if (elo <= 1300) player.rank = "Silver 2";
+      else if (elo <= 1400) player.rank = "Silver 3";
+      else if (elo <= 1500) player.rank = "Gold 1";
+      else if (elo <= 1600) player.rank = "Gold 2";
+      else if (elo <= 1700) player.rank = "Gold 3";
+      else if (elo <= 1800) player.rank = "Diamond";
+      else if (elo <= 1900) player.rank = "Platinum";
+      else if (elo <= 2000) player.rank = "Master";
+      else player.rank = "Grandmaster";
+    }
+    
+    function showRanking() {
+      const playerName = prompt("Enter player name:");
+      const player = players[playerName];
+      if (player) {
+        alert(`${playerName}'s ranking: ${player.rank} (Elo: ${player.elo})`);
+      } else {
+        alert("Player not found.");
+      }
+    }
+    
+    function showLeaderboard() {
+      const sortedPlayers = Object.entries(players).sort((a, b) => b[1].elo - a[1].elo);
+      const leaderboard = sortedPlayers.slice(0, 50).map(entry => `${entry[0]} - ${entry[1].rank} (Elo: ${entry[1].elo})`);
+      document.getElementById("output").innerHTML = leaderboard.join("<br>");
+    }
+    
+    fetchData();
+  </script>
 </body>
 </html>
