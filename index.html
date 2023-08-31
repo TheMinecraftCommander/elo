@@ -28,27 +28,12 @@
         <button onclick="displayRankings()">Display Rankings</button>
         <button onclick="displayLeaderboard()">Display Leaderboard</button>
     </div>
-    <div>
-        <h2>Admin Login</h2>
-        <label for="adminPassword">Admin Password:</label>
-        <input type="password" id="adminPassword">
-        <button onclick="loginAsAdmin()">Login as Admin</button>
-    </div>
     <div id="output"></div>
 
     <script>
         let players = [];
-        let adminMode = false;
-
-        // Replace 'adminpassword' with your desired admin password
-        const ADMIN_PASSWORD = 'adminpassword';
 
         function addPlayer() {
-            if (!adminMode) {
-                alert("Only admins can add players.");
-                return;
-            }
-
             const playerName = document.getElementById("playerName").value;
             if (playerName) {
                 players.push({ name: playerName, elo: 1000, wins: 0, losses: 0 });
@@ -56,12 +41,26 @@
             }
         }
 
-        function recordMatch() {
-            if (!adminMode) {
-                alert("Only admins can record match results.");
-                return;
-            }
+        function getIndexOfPlayer(name) {
+            return players.findIndex(player => player.name === name);
+        }
 
+        function updateElo(winnerIndex, loserIndex) {
+            const kFactor = 32;
+            const winner = players[winnerIndex];
+            const loser = players[loserIndex];
+
+            const winnerExpectedScore = 1 / (1 + Math.pow(10, (loser.elo - winner.elo) / 400));
+            const loserExpectedScore = 1 - winnerExpectedScore;
+
+            winner.elo += kFactor * (1 - winnerExpectedScore);
+            loser.elo += kFactor * (0 - loserExpectedScore);
+
+            winner.wins++;
+            loser.losses++;
+        }
+
+        function recordMatch() {
             const winningPlayer = document.getElementById("winningPlayer").value;
             const losingPlayer = document.getElementById("losingPlayer").value;
 
@@ -76,18 +75,50 @@
             document.getElementById("losingPlayer").value = "";
         }
 
-        function loginAsAdmin() {
-            const enteredPassword = document.getElementById("adminPassword").value;
-            if (enteredPassword === ADMIN_PASSWORD) {
-                adminMode = true;
-                document.getElementById("adminPassword").value = "";
-                alert("Logged in as admin.");
-            } else {
-                alert("Admin login failed.");
-            }
+        function displayRankings() {
+            players.sort((a, b) => b.elo - a.elo);
+
+            const output = document.getElementById("output");
+            output.innerHTML = "<h2>Rankings:</h2>";
+
+            players.forEach(player => {
+                const barLength = (player.elo / players[0].elo) * 30;
+                const bar = "#".repeat(Math.round(barLength));
+                output.innerHTML += `<p>${player.name}: ${bar} (${player.elo.toFixed(2)})</p>`;
+            });
         }
 
-        // ... (remaining JavaScript functions, unchanged) ...
+        function displayLeaderboard() {
+            players.sort((a, b) => b.elo - a.elo);
+
+            const output = document.getElementById("output");
+            output.innerHTML = "<h2>Leaderboard:</h2>";
+
+            players.forEach((player, index) => {
+                output.innerHTML += `<p>${index + 1}. ${player.name} - Elo: ${player.elo.toFixed(2)}, Wins: ${player.wins}, Losses: ${player.losses}</p>`;
+            });
+        }
+    let players = [];
+
+    // Load player data from localStorage when the page loads
+    function loadPlayers() {
+        const savedPlayers = localStorage.getItem('players');
+        if (savedPlayers) {
+            players = JSON.parse(savedPlayers);
+        }
+    }
+
+    // Save player data to localStorage
+    function savePlayers() {
+        localStorage.setItem('players', JSON.stringify(players));
+    }
+
+    function addPlayer() {
+        // ... (your addPlayer code)
+        savePlayers(); // Call this after adding a player
+    }
+
+    function updateElo(winnerIndex, loserIndex)
     </script>
 </body>
 </html>
