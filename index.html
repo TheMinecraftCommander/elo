@@ -31,13 +31,50 @@
     <div id="output"></div>
 
     <script>
+        const GIST_ID = 'ad494a1927fec8de412731d7e4e99b37';
+        const PERSONAL_ACCESS_TOKEN = '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';
+
         let players = [];
 
-        function addPlayer() {
+        async function fetchData() {
+            const response = await fetch(`https://api.github.com/gists/${GIST_ID}`);
+            const gist = await response.json();
+            
+            if (gist.files['elo-data.json']) {
+                return JSON.parse(gist.files['elo-data.json'].content);
+            } else {
+                return [];
+            }
+        }
+
+        async function saveData() {
+            const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `token ${PERSONAL_ACCESS_TOKEN}`,
+                },
+                body: JSON.stringify({
+                    files: {
+                        'elo-data.json': {
+                            content: JSON.stringify(players, null, 2),
+                        },
+                    },
+                }),
+            });
+
+            return response.json();
+        }
+
+        async function initialize() {
+            players = await fetchData();
+        }
+
+        async function addPlayer() {
             const playerName = document.getElementById("playerName").value;
             if (playerName) {
                 players.push({ name: playerName, elo: 1000, wins: 0, losses: 0 });
                 document.getElementById("playerName").value = "";
+                await saveData();
             }
         }
 
@@ -60,35 +97,6 @@
             loser.losses++;
         }
 
-        async function saveData(data) {
-            const response = await fetch(`https://api.github.com/gists/ad494a1927fec8de412731d7e4e99b37`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': 'token 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',
-                },
-                body: JSON.stringify({
-                    files: {
-                        'elo-data.json': {
-                            content: JSON.stringify(data, null, 2),
-                        },
-                    },
-                }),
-            });
-
-            return response.json();
-        }
-
-        async function fetchData() {
-            const response = await fetch(`https://api.github.com/gists/ad494a1927fec8de412731d7e4e99b37`);
-            const gist = await response.json();
-            
-            if (gist.files['elo-data.json']) {
-                return JSON.parse(gist.files['elo-data.json'].content);
-            } else {
-                return {};
-            }
-        }
-
         async function recordMatch() {
             const winningPlayer = document.getElementById("winningPlayer").value;
             const losingPlayer = document.getElementById("losingPlayer").value;
@@ -98,9 +106,7 @@
 
             if (winnerIndex !== -1 && loserIndex !== -1) {
                 updateElo(winnerIndex, loserIndex);
-
-                // Save data after updating Elo
-                await saveData(players);
+                await saveData();
             }
 
             document.getElementById("winningPlayer").value = "";
@@ -133,7 +139,7 @@
 
         // Load data when the page loads
         window.onload = async () => {
-            players = await fetchData();
+            await initialize();
         };
     </script>
 </body>
