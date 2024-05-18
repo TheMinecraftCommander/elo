@@ -1,119 +1,43 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>Elo System</title>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Player</title>
+    <style>
+        #player-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .player-item {
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
-  <h1>Elo System</h1>
+    <h2>Add Player</h2>
+    <input type="text" id="new-player-name" placeholder="Enter player name">
+    <button onclick="addPlayer()">Add Player</button>
+    <ul id="player-list"></ul>
 
-  <button onclick="addPlayer()">Add Player</button>
-  <button onclick="recordMatch()">Record Match</button>
-  <button onclick="showRanking()">Show Ranking</button>
-  <button onclick="showLeaderboard()">Display Leaderboard</button>
-
-  <div id="output"></div>
-
-  <script>
-    const GIST_ID = "ffef17428d7124855361af63c1f663ca"; // Replace with your Gist ID
-    const TOKEN = "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"; // Replace with your GitHub token
-    const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
-    const API_URL = `https://gist.github.com/TheMinecraftCommander/ffef17428d7124855361af63c1f663ca`;
-
-    let players = {};
-
-    async function fetchData() {
-      try {
-        const response = await axios.get(CORS_PROXY + API_URL, {
-          headers: {
-            Authorization: `Bearer ${TOKEN}`
-          }
-        });
-        const data = response.data;
-        if (data.files && data.files["players.json"]) {
-          players = JSON.parse(data.files["players.json"].content);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    }
-
-    async function saveData() {
-      try {
-        await axios.patch(CORS_PROXY + API_URL, {
-          files: {
-            "players.json": {
-              content: JSON.stringify(players, null, 2)
+    <script>
+        function addPlayer() {
+            var playerNameInput = document.getElementById("new-player-name");
+            var playerName = playerNameInput.value.trim();
+            
+            if (playerName !== "") {
+                var playerList = document.getElementById("player-list");
+                var playerItem = document.createElement("li");
+                playerItem.textContent = playerName;
+                playerItem.className = "player-item";
+                playerList.appendChild(playerItem);
+                
+                // Clear input field after adding player
+                playerNameInput.value = "";
+            } else {
+                alert("Please enter a player name.");
             }
-          }
-        }, {
-          headers: {
-            Authorization: `Bearer ${TOKEN}`
-          }
-        });
-      } catch (error) {
-        console.error("Error saving data:", error);
-      }
-    }
-
-    function addPlayer() {
-      const playerName = prompt("Enter player name:");
-      if (playerName && !players[playerName]) {
-        players[playerName] = {
-          elo: 1000,
-          rank: "Bronze 2"
-        };
-        saveData();
-      }
-    }
-
-    function recordMatch() {
-      const winner = prompt("Enter winner's name:");
-      const loser = prompt("Enter loser's name:");
-      if (players[winner] && players[loser]) {
-        const K = 32; // Elo adjustment factor
-        const winnerExpected = 1 / (1 + 10 ** ((players[loser].elo - players[winner].elo) / 400));
-        const loserExpected = 1 - winnerExpected;
-        players[winner].elo += K * (1 - winnerExpected);
-        players[loser].elo += K * (0 - loserExpected);
-        updateRank(players[winner]);
-        updateRank(players[loser]);
-        saveData();
-      }
-    }
-
-    function updateRank(player) {
-      const elo = player.elo;
-      if (elo <= 950) player.rank = "Bronze 1";
-      else if (elo <= 1000) player.rank = "Bronze 2";
-      else if (elo <= 1100) player.rank = "Bronze 3";
-      else if (elo <= 1200) player.rank = "Silver 1";
-      else if (elo <= 1300) player.rank = "Silver 2";
-      else if (elo <= 1400) player.rank = "Silver 3";
-      else if (elo <= 1500) player.rank = "Gold 1";
-      else if (elo <= 1600) player.rank = "Gold 2";
-      else if (elo <= 1700) player.rank = "Gold 3";
-      else if (elo <= 1800) player.rank = "Diamond";
-      else if (elo <= 1900) player.rank = "Platinum";
-      else if (elo <= 2000) player.rank = "Master";
-      else player.rank = "Grandmaster";
-    }
-
-    function showRanking() {
-      const playerName = prompt("Enter player name:");
-      const player = players[playerName];
-      if (player) {
-        alert(`${playerName}'s ranking: ${player.rank} (Elo: ${player.elo})`);
-      } else {
-        alert("Player not found.");
-      }
-    }
-
-    function showLeaderboard() {
-      const sortedPlayers = Object.entries(players).sort((a, b) => b[1].elo - a[1].elo);
-      const leaderboard = sortedPlayers.slice(0, 50).map(entry => `${entry[0]} - ${entry[1].rank} (Elo: ${entry[1].elo})`);
-      document.getElementById("output").innerHTML = leaderboard.join("<br>");
-    }
-
-    fetchData();
-  </script>
+        }
+    </script>
 </body>
+</html>
