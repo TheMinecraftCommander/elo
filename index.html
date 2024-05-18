@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaderboard with Match Recording</title>
+    <title>Leaderboard with Match Recording and Titles</title>
     <style>
         #leaderboard {
             list-style-type: none;
@@ -26,6 +26,14 @@
 
     <script>
         var players = [];
+        var eloTitles = {
+            1000: "Shit",
+            1200: "Mediocre",
+            1400: "Gold",
+            1600: "Platinum",
+            1800: "Diamond",
+            2000: "Master"
+        };
 
         function addPlayer() {
             var playerNameInput = document.getElementById("new-player-name");
@@ -34,7 +42,8 @@
             if (playerName !== "") {
                 var player = {
                     name: playerName,
-                    elo: 950
+                    elo: 950,
+                    title: "Shit"
                 };
 
                 players.push(player);
@@ -64,6 +73,7 @@
             var kFactor = 32; // You can adjust the k-factor as needed
 
             updateElo(player1, player2, outcome, kFactor);
+            updateTitles();
             updateLeaderboard();
         }
 
@@ -81,6 +91,16 @@
             player2.elo = Math.round(newRating2);
         }
 
+        function updateTitles() {
+            players.forEach(player => {
+                for (var rating in eloTitles) {
+                    if (player.elo >= parseInt(rating)) {
+                        player.title = eloTitles[rating];
+                    }
+                }
+            });
+        }
+
         function updateLeaderboard() {
             var leaderboard = document.getElementById("leaderboard");
             leaderboard.innerHTML = ""; // Clear previous leaderboard
@@ -91,7 +111,7 @@
             // Update leaderboard with sorted player list
             players.forEach((player, index) => {
                 var playerItem = document.createElement("li");
-                playerItem.textContent = player.name + " - Elo: " + player.elo;
+                playerItem.textContent = player.name + " - Elo: " + player.elo + " - Title: " + player.title;
                 playerItem.className = "player-item";
                 leaderboard.appendChild(playerItem);
             });
