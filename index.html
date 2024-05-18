@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaderboard</title>
+    <title>Leaderboard with Match Recording</title>
     <style>
         #leaderboard {
             list-style-type: none;
@@ -18,10 +18,13 @@
     <h2>Leaderboard</h2>
     <input type="text" id="new-player-name" placeholder="Enter player name">
     <button onclick="addPlayer()">Add Player</button>
+    <br>
+    <input type="text" id="player1" placeholder="Player 1">
+    <input type="text" id="player2" placeholder="Player 2">
+    <button onclick="recordMatch()">Record Match</button>
     <ul id="leaderboard"></ul>
 
     <script>
-        // Initialize leaderboard with player names and starting Elo ratings
         var players = [];
 
         function addPlayer() {
@@ -42,6 +45,40 @@
             } else {
                 alert("Please enter a player name.");
             }
+        }
+
+        function recordMatch() {
+            var player1Name = document.getElementById("player1").value.trim();
+            var player2Name = document.getElementById("player2").value.trim();
+
+            var player1 = players.find(player => player.name === player1Name);
+            var player2 = players.find(player => player.name === player2Name);
+
+            if (!player1 || !player2) {
+                alert("Invalid player name.");
+                return;
+            }
+
+            var outcome = confirm(player1Name + " won the match?");
+
+            var kFactor = 32; // You can adjust the k-factor as needed
+
+            updateElo(player1, player2, outcome, kFactor);
+            updateLeaderboard();
+        }
+
+        function updateElo(player1, player2, outcome, kFactor) {
+            var expectedScore1 = 1 / (1 + Math.pow(10, (player2.elo - player1.elo) / 400));
+            var expectedScore2 = 1 / (1 + Math.pow(10, (player1.elo - player2.elo) / 400));
+
+            var actualScore1 = outcome ? 1 : 0; // 1 if player1 won, 0 if player2 won
+            var actualScore2 = outcome ? 0 : 1; // 0 if player1 won, 1 if player2 won
+
+            var newRating1 = player1.elo + kFactor * (actualScore1 - expectedScore1);
+            var newRating2 = player2.elo + kFactor * (actualScore2 - expectedScore2);
+
+            player1.elo = Math.round(newRating1);
+            player2.elo = Math.round(newRating2);
         }
 
         function updateLeaderboard() {
