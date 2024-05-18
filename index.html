@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Player</title>
+    <title>Leaderboard</title>
     <style>
-        #player-list {
+        #leaderboard {
             list-style-type: none;
             padding: 0;
         }
@@ -15,28 +15,49 @@
     </style>
 </head>
 <body>
-    <h2>Add Player</h2>
+    <h2>Leaderboard</h2>
     <input type="text" id="new-player-name" placeholder="Enter player name">
     <button onclick="addPlayer()">Add Player</button>
-    <ul id="player-list"></ul>
+    <ul id="leaderboard"></ul>
 
     <script>
+        // Initialize leaderboard with player names and starting Elo ratings
+        var players = [];
+
         function addPlayer() {
             var playerNameInput = document.getElementById("new-player-name");
             var playerName = playerNameInput.value.trim();
-            
+
             if (playerName !== "") {
-                var playerList = document.getElementById("player-list");
-                var playerItem = document.createElement("li");
-                playerItem.textContent = playerName;
-                playerItem.className = "player-item";
-                playerList.appendChild(playerItem);
+                var player = {
+                    name: playerName,
+                    elo: 950
+                };
+
+                players.push(player);
+                updateLeaderboard();
                 
                 // Clear input field after adding player
                 playerNameInput.value = "";
             } else {
                 alert("Please enter a player name.");
             }
+        }
+
+        function updateLeaderboard() {
+            var leaderboard = document.getElementById("leaderboard");
+            leaderboard.innerHTML = ""; // Clear previous leaderboard
+
+            // Sort players by Elo rating (descending order)
+            players.sort((a, b) => b.elo - a.elo);
+
+            // Update leaderboard with sorted player list
+            players.forEach((player, index) => {
+                var playerItem = document.createElement("li");
+                playerItem.textContent = player.name + " - Elo: " + player.elo;
+                playerItem.className = "player-item";
+                leaderboard.appendChild(playerItem);
+            });
         }
     </script>
 </body>
