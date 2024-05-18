@@ -17,13 +17,14 @@
   <script>
     const GIST_ID = "ffef17428d7124855361af63c1f663ca"; // Replace with your Gist ID
     const TOKEN = "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"; // Replace with your GitHub token
+    const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
     const API_URL = `https://gist.github.com/TheMinecraftCommander/ffef17428d7124855361af63c1f663ca`;
 
     let players = {};
 
     async function fetchData() {
       try {
-        const response = await axios.get(API_URL, {
+        const response = await axios.get(CORS_PROXY + API_URL, {
           headers: {
             Authorization: `Bearer ${TOKEN}`
           }
@@ -39,7 +40,7 @@
 
     async function saveData() {
       try {
-        await axios.patch(API_URL, {
+        await axios.patch(CORS_PROXY + API_URL, {
           files: {
             "players.json": {
               content: JSON.stringify(players, null, 2)
@@ -117,4 +118,3 @@
     fetchData();
   </script>
 </body>
-</html>
