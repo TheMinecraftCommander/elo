@@ -82,4 +82,28 @@ function updateElo(player1, player2, outcome, kFactor) {
     const expectedScore2 = 1 / (1 + Math.pow(10, (player1.elo - player2.elo) / 400));
 
     const actualScore1 = outcome ? 1 : 0; // 1 if player1 won, 0 if player2 won
-    const actualScore2 = outcome ? 0 :
+    const actualScore2 = outcome ? 0 : 1; // 0 if player1 won, 1 if player2 won
+
+    const newRating1 = player1.elo + kFactor * (actualScore1 - expectedScore1);
+    const newRating2 = player2.elo + kFactor * (actualScore2 - expectedScore2);
+
+    player1.elo = Math.round(newRating1);
+    player2.elo = Math.round(newRating2);
+}
+
+function updateTitles() {
+    players.forEach(player => {
+        for (let rating in eloTitles) {
+            if (player.elo >= parseInt(rating)) {
+                player.title = eloTitles[rating];
+            }
+        }
+    });
+}
+
+// Serve static files for the frontend
+app.use(express.static('public'));
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
