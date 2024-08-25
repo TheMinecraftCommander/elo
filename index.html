@@ -1,28 +1,86 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaderboard with Match Recording and Titles</title>
-    <script src="server.js"></script> <!-- Include external JavaScript file -->
-    <style>
-        #leaderboard {
-            list-style-type: none;
-            padding: 0;
+document.addEventListener('DOMContentLoaded', () => {
+    // Fetch the initial leaderboard
+    fetchLeaderboard();
+
+    // Add player function
+    window.addPlayer = async () => {
+        const playerName = document.getElementById('new-player-name').value.trim();
+        if (playerName === '') {
+            alert('Please enter a player name.');
+            return;
         }
-        .player-item {
-            margin-bottom: 5px;
+
+        const response = await fetch('/players', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: playerName })
+        });
+
+        if (response.ok) {
+            const player = await response.json();
+            alert('Player added successfully!');
+            fetchLeaderboard(); // Refresh the leaderboard
+            document.getElementById('new-player-name').value = ''; // Clear the input field
+        } else {
+            const error = await response.json();
+            alert(`Error adding player: ${error.error}`);
         }
-    </style>
-</head>
-<body>
-    <h2>Leaderboard</h2>
-    <input type="text" id="new-player-name" placeholder="Enter player name">
-    <button onclick="addPlayer()">Add Player</button>
-    <br>
-    <input type="text" id="player1" placeholder="Player 1">
-    <input type="text" id="player2" placeholder="Player 2">
-    <button onclick="recordMatch()">Record Match</button>
-    <ul id="leaderboard"></ul>
-</body>
-</html>
+    };
+
+    // Record match function
+    window.recordMatch = async () => {
+        const player1Name = document.getElementById('player1').value.trim();
+        const player2Name = document.getElementById('player2').value.trim();
+        if (player1Name === '' || player2Name === '') {
+            alert('Please enter both player names.');
+            return;
+        }
+
+        const response = await fetch('/match', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                player1Name,
+                player2Name,
+                outcome: true // Set this to `true` or `false` based on match result
+            })
+        });
+
+        if (response.ok) {
+            alert('Match recorded successfully!');
+            fetchLeaderboard(); // Refresh the leaderboard
+            document.getElementById('player1').value = '';
+            document.getElementById('player2').value = '';
+        } else {
+            const error = await response.json();
+            alert(`Error recording match: ${error.error}`);
+        }
+    };
+
+    // Fetch the leaderboard from the server
+    async function fetchLeaderboard() {
+        const response = await fetch('/players');
+        if (response.ok) {
+            const players = await response.json();
+            updateLeaderboard(players);
+        } else {
+            alert('Error fetching leaderboard.');
+        }
+    }
+
+    // Update the leaderboard UI
+    function updateLeaderboard(players) {
+        const leaderboard = document.getElementById('leaderboard');
+        leaderboard.innerHTML = '';
+        players.forEach(player => {
+            const li = document.createElement('li');
+            li.className = 'player-item';
+            li.textContent = `${player.name}: ${player.elo} (${player.title})`;
+            leaderboard.appendChild(li);
+        });
+    }
+});
