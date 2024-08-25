@@ -101,8 +101,13 @@ function updateTitles() {
     });
 }
 
-// Serve static files for the frontend
-app.use(express.static('public'));
+// Serve static files from the base directory
+app.use(express.static(__dirname));
+
+// Serve the index.html file on the root route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
